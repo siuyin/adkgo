@@ -18,11 +18,9 @@ import (
 )
 
 func main() {
-	model := getModel()
-
 	agent, err := llmagent.New(llmagent.Config{
 		Name:        "hello_time_agent",
-		Model:       model,
+		Model:       getModel(),
 		Description: "Tells the current time in a specified city.",
 		Instruction: "You are a helpful assistant that tells the current time in a city.",
 		Tools: []tool.Tool{
@@ -42,7 +40,7 @@ func getModel() model.LLM {
 		os.Getenv("MODEL"),
 		&genai.ClientConfig{APIKey: os.Getenv("GOOGLE_API_KEY")})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("could not create model: %v", err)
 	}
 
 	return model
