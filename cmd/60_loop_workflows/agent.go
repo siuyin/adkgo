@@ -1,28 +1,22 @@
 package main
 
 import (
-	"context"
+	"agenttry/mdl"
+	"agenttry/runner"
 	"log"
-	"os"
 
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/agent/llmagent"
 	"google.golang.org/adk/agent/workflowagents/loopagent"
 	"google.golang.org/adk/agent/workflowagents/sequentialagent"
-	"google.golang.org/adk/cmd/launcher/adk"
-	"google.golang.org/adk/cmd/launcher/full"
-	"google.golang.org/adk/model"
-	"google.golang.org/adk/model/gemini"
-	"google.golang.org/adk/server/restapi/services"
 	"google.golang.org/adk/tool"
 	"google.golang.org/adk/tool/exitlooptool"
-	"google.golang.org/genai"
 )
 
 func main() {
 	initialWriterAgent, err := llmagent.New(llmagent.Config{
 		Name:  "InitialWriterAgent",
-		Model: getModel(),
+		Model: mdl.FromEnv(),
 		Instruction: `Based on the user's prompt, write a first draft of a short story
 		around 100 to 150 words long.
 		Output only the story text, with no introduction or explanation.`,
@@ -34,7 +28,7 @@ func main() {
 
 	criticAgent, err := llmagent.New(llmagent.Config{
 		Name:  "CriticAgent",
-		Model: getModel(),
+		Model: mdl.FromEnv(),
 		Instruction: `You are a constructive story critic.
 		Review the story below:
 		Story: {current_story}
@@ -55,7 +49,7 @@ func main() {
 
 	refinerAgent, err := llmagent.New(llmagent.Config{
 		Name:  "RefinerAgent",
-		Model: getModel(),
+		Model: mdl.FromEnv(),
 		Instruction: `You are a story refiner. You hava a draft and critique.
 
 		Story Draft: {current_story}
@@ -89,30 +83,6 @@ func main() {
 		log.Fatalf("Failed to create agent: %v", err)
 	}
 
-	run(agent)
+	runner.Run(agent)
 
-}
-
-func getModel() model.LLM {
-	model, err := gemini.NewModel(context.Background(),
-		os.Getenv("MODEL"),
-		&genai.ClientConfig{APIKey: os.Getenv("GOOGLE_API_KEY")})
-	if err != nil {
-		log.Fatalf("could not create model: %v", err)
-	}
-
-	return model
-}
-
-func run(agent agent.Agent) {
-	config := &adk.Config{
-		AgentLoader: services.NewSingleAgentLoader(agent),
-	}
-
-	l := full.NewLauncher()
-
-	err := l.Execute(context.Background(), config, os.Args[1:])
-	if err != nil {
-		log.Fatalf("run failed: %v\n\n%s", err, l.CommandLineSyntax())
-	}
 }
