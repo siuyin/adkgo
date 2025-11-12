@@ -59,7 +59,7 @@ func main() {
 		log.Fatalf("Failed to create research agent: %v", err)
 	}
 
-	multiRun(agent, researchAgent, summarizerAgent)
+	run(agent)
 
 }
 
@@ -74,21 +74,14 @@ func getModel() model.LLM {
 	return model
 }
 
-func multiRun(agent agent.Agent, agents ...agent.Agent) {
-	var err error
-	//loader, err := services.NewMultiAgentLoader(agent, agents...)
-	loader := services.NewSingleAgentLoader(agent)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func run(agent agent.Agent) {
 	config := &adk.Config{
-		AgentLoader: loader,
+		AgentLoader: services.NewSingleAgentLoader(agent),
 	}
 
 	l := full.NewLauncher()
 
-	err = l.Execute(context.Background(), config, os.Args[1:])
+	err := l.Execute(context.Background(), config, os.Args[1:])
 	if err != nil {
 		log.Fatalf("run failed: %v\n\n%s", err, l.CommandLineSyntax())
 	}
