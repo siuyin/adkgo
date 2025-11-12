@@ -1,6 +1,5 @@
 # Run
 ```
-cd ~/time_agent
 go run .
 ```
 
