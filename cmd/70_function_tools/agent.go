@@ -22,7 +22,6 @@ type exchangeRateResult struct {
 type baseRates map[string]string
 
 func exchangeRate(ctx tool.Context, inp exchangeRateArgs) exchangeRateResult {
-	log.Println("terpau called:", inp)
 	rates := map[string]baseRates{"usd": baseRates{"eur": "0.93", "jpy": "157.50", "inr": "83.58"}}
 	base := strings.ToLower(inp.BaseCurrency)
 	target := strings.ToLower(inp.TargetCurrency)
@@ -30,8 +29,28 @@ func exchangeRate(ctx tool.Context, inp exchangeRateArgs) exchangeRateResult {
 	if !ok {
 		return exchangeRateResult{Rate: fmt.Sprintf("Sorry, we can't convert %s to %s", inp.BaseCurrency, inp.TargetCurrency)}
 	}
-	log.Println("terpau returning:", rate)
 	return exchangeRateResult{Rate: rate}
+}
+
+type paymentMethodArgs struct {
+	Method string `json:"method"` // The name of the payment method. It should be descriptive. Eg. "platinum credit card" or "bank transfer".
+}
+type paymentMethodFee struct {
+	Fee string `json:"fee"` // Fee associated with payment method.
+}
+
+func feeForPaymentMethod(ctx tool.Context, inp paymentMethodArgs) paymentMethodFee {
+	fees := map[string]float32{
+		"platinum credit card": 0.02,
+		"gold debit card":      0.035,
+		"bank transfer":        0.01,
+	}
+	m := strings.ToLower(inp.Method)
+	fee, ok := fees[m]
+	if !ok {
+		return paymentMethodFee{fmt.Sprintf("Sorry, we do not accept %q as a payment method.", inp.Method)}
+	}
+	return paymentMethodFee{fmt.Sprintf("%v", fee)}
 }
 
 func main() {
@@ -44,17 +63,35 @@ func main() {
 		log.Fatal(err)
 	}
 
-	exchangeRateAgent, err := llmagent.New(llmagent.Config{
-		Name:  "ExchangeRateAgent",
+	feeForPaymentMethodTool, err := functiontool.New(functiontool.Config{
+		Name: "FeeForPaymentMethod",
+		Description: `Looks up the fee charged for using a payment method.
+	Check for error messages in the response and format the overall response in a professional way to the user.`,
+	}, feeForPaymentMethod)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	currencyAgent, err := llmagent.New(llmagent.Config{
+		Name:  "CurrencyAgent",
 		Model: mdl.FromEnv(),
-		Instruction: `You are specialist exchange rate agent that only answer queries relating to exchange rates.
-		You MUST call the ExchangeRate tool. Check the output status and then use the rate from the output.`,
-		Tools: []tool.Tool{exchangeRateTool},
+		Instruction: `You are a smart currency conversion assistant.
+	For currency conversion requests:
+	1. Use 'FeeForPaymentMethod' to find transaction fees.
+	2. Use 'ExchangeRate' to get currency conversion rates.
+	3. Check the response for each tool call for errors.
+	4. Calculate the final amount after fees based on the output of 'FeeForPaymentMethod' and 'ExchangeRate' methods and provide a clear breakdown.
+	5. First, state the final converted amount.
+	   Then, explain how you got the amount by showing the intermediate amounts. Your explanation must include: the fee percentage and its value in the original currency, the amount remaining after the fee, and the exchange rate used for the final conversion.
+	
+	If any tool returns an error, explain the issue clearly to the user.
+	`,
+		Tools: []tool.Tool{feeForPaymentMethodTool, exchangeRateTool},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	runner.Run(exchangeRateAgent)
+	runner.Run(currencyAgent)
 
 }
