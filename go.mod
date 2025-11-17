@@ -25,6 +25,8 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mnogu/go-calculator v0.0.1 // indirect
+	github.com/siuyin/dflt v0.0.0-20230329062002-0475f4d54412 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
