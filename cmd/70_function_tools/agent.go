@@ -36,7 +36,7 @@ type paymentMethodArgs struct {
 	Method string `json:"method"` // The name of the payment method. It should be descriptive. Eg. "platinum credit card" or "bank transfer".
 }
 type paymentMethodFee struct {
-	Fee string `json:"fee"` // Fee associated with payment method.
+	Fee string `json:"fee"` // Fee rate associated with payment method. To get a percentage rate, multiply fee rate by 100.
 }
 
 func feeForPaymentMethod(ctx tool.Context, inp paymentMethodArgs) paymentMethodFee {
