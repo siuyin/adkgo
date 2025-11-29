@@ -6,15 +6,14 @@ import (
 	"os"
 
 	"google.golang.org/adk/agent"
-	"google.golang.org/adk/cmd/launcher/adk"
+	"google.golang.org/adk/cmd/launcher"
 	"google.golang.org/adk/cmd/launcher/full"
-	"google.golang.org/adk/server/restapi/services"
 )
 
 // Run runs the agent.
-func Run(agent agent.Agent) {
-	config := &adk.Config{
-		AgentLoader: services.NewSingleAgentLoader(agent),
+func Run(agt agent.Agent) {
+	config := &launcher.Config{
+		AgentLoader: agent.NewSingleLoader(agt),
 	}
 
 	l := full.NewLauncher()
